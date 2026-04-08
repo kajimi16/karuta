@@ -11,6 +11,9 @@ import java.io.File;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicReference;
 
+/**
+ * 对 JavaFX 媒体播放的轻量封装，确保所有播放器操作都在 FX 线程执行。
+ */
 public class AudioPlayer {
     private static final double DEFAULT_VOLUME = 0.8;
 
@@ -21,17 +24,26 @@ public class AudioPlayer {
     private double volume;
     private PlaybackListener listener;
 
+    /**
+     * 游戏引擎使用的播放回调接口。
+     */
     public interface PlaybackListener {
         void onPlaybackComplete();
         void onPlaybackError(String error);
         void onPlaybackStarted(Song song);
     }
 
+    /**
+     * 使用默认音量创建播放器。
+     */
     public AudioPlayer() {
         this.volume = DEFAULT_VOLUME;
         this.isPaused = false;
     }
 
+    /**
+     * 在校验文件存在且格式受支持后开始播放。
+     */
     public void play(Song song) throws Exception {
         if (song == null || !song.fileExists()) {
             throw new IllegalArgumentException("Song file does not exist.");
@@ -81,6 +93,9 @@ public class AudioPlayer {
         }
     }
 
+    /**
+     * 播放音频，并在指定秒数后自动停止。
+     */
     public void playLimited(Song song, int durationSeconds) throws Exception {
         play(song);
         runOnFxThreadAndWait(() -> {
@@ -97,6 +112,9 @@ public class AudioPlayer {
         });
     }
 
+    /**
+     * 当音频正在播放时暂停播放。
+     */
     public void pause() {
         runOnFxThreadAndWait(() -> {
             if (mediaPlayer != null && mediaPlayer.getStatus() == MediaPlayer.Status.PLAYING) {
@@ -106,6 +124,9 @@ public class AudioPlayer {
         });
     }
 
+    /**
+     * 从暂停状态恢复播放。
+     */
     public void resume() {
         runOnFxThreadAndWait(() -> {
             if (mediaPlayer != null && isPaused) {
@@ -115,10 +136,16 @@ public class AudioPlayer {
         });
     }
 
+    /**
+     * 停止播放并释放当前 JavaFX 播放器实例。
+     */
     public void stop() {
         runOnFxThreadAndWait(this::stopInternal);
     }
 
+    /**
+     * 停止、重播和资源释放流程共用的清理逻辑。
+     */
     private void stopInternal() {
         if (stopTimer != null) {
             stopTimer.stop();
@@ -133,6 +160,9 @@ public class AudioPlayer {
         currentSong = null;
     }
 
+    /**
+     * 更新缓存音量，并在存在活动播放器时同步应用。
+     */
     public void setVolume(double volume) {
         if (volume < 0.0 || volume > 1.0) {
             throw new IllegalArgumentException("Volume must be between 0.0 and 1.0.");
@@ -149,6 +179,9 @@ public class AudioPlayer {
         return volume;
     }
 
+    /**
+     * 当播放器存在时跳转到当前音频的指定位置。
+     */
     public void seek(double seconds) {
         runOnFxThreadAndWait(() -> {
             if (mediaPlayer != null) {
@@ -183,10 +216,16 @@ public class AudioPlayer {
         return currentSong;
     }
 
+    /**
+     * 释放所有播放资源。
+     */
     public void dispose() {
         stop();
     }
 
+    /**
+     * 将可播放格式限制为项目统一支持的音频格式。
+     */
     private boolean isPlayableFormat(String fileName) {
         int lastDot = fileName.lastIndexOf('.');
         if (lastDot < 0) {
@@ -196,6 +235,9 @@ public class AudioPlayer {
         return extension.matches("mp3|wav|m4a|aif|aiff");
     }
 
+    /**
+     * 确保 JavaFX 媒体相关操作都在 FX 应用线程执行。
+     */
     private void runOnFxThreadAndWait(Runnable action) {
         if (Platform.isFxApplicationThread()) {
             action.run();

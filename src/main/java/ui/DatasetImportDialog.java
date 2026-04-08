@@ -50,6 +50,9 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 import java.util.zip.ZipOutputStream;
 
+/**
+ * 用于新建、修改、导入、导出和删除数据集的模态编辑器。
+ */
 public class DatasetImportDialog {
     private static final String CSV_HEADER = "image_name,work_name,songs,song_display_names";
     private static final String UTF8_BOM = "\uFEFF";
@@ -77,6 +80,9 @@ public class DatasetImportDialog {
     private String currentImageFileName;
     private boolean updatingDatasetSelection;
 
+    /**
+     * 创建对话框，并在提供初始数据集时加载它并准备编辑器。
+     */
     public DatasetImportDialog(Stage owner, ConfigManager configManager, String initialDatasetName, Consumer<String> onSaved) {
         this.configManager = configManager;
         this.onSaved = onSaved;
@@ -101,10 +107,16 @@ public class DatasetImportDialog {
         }
     }
 
+    /**
+     * 显示模态数据集编辑器。
+     */
     public void showAndWait() {
         stage.showAndWait();
     }
 
+    /**
+     * 构建顶层布局，包括数据集控制区、编辑表单和状态区域。
+     */
     private Scene buildScene() {
         BorderPane root = new BorderPane();
         root.setPadding(new Insets(24));
@@ -156,6 +168,9 @@ public class DatasetImportDialog {
         return new Scene(root);
     }
 
+    /**
+     * 构建左侧栏，用于选择数据集和执行数据包操作。
+     */
     private VBox buildDatasetPanel() {
         VBox leftPanel = new VBox(16);
         leftPanel.setPrefWidth(360);
@@ -215,6 +230,9 @@ public class DatasetImportDialog {
         return leftPanel;
     }
 
+    /**
+     * 构建右侧栏，用于编辑单个作品的图片和歌曲。
+     */
     private VBox buildEditorPanel() {
         VBox rightPanel = new VBox(18);
         rightPanel.setPadding(new Insets(22));
@@ -284,6 +302,9 @@ public class DatasetImportDialog {
         return rightPanel;
     }
 
+    /**
+     * 使用新输入的数据集名称，或当前下拉框选中的数据集。
+     */
     private void applyDatasetSelection() {
         String newDatasetName = sanitizeName(newDatasetField.getText());
         if (!newDatasetName.equals("dataset") || isMeaningful(newDatasetField.getText())) {
@@ -301,6 +322,9 @@ public class DatasetImportDialog {
         loadDataset(selected);
     }
 
+    /**
+     * 从磁盘加载一个数据集到内存，并重置编辑器以便安全修改。
+     */
     private void loadDataset(String datasetName) {
         try {
             activeDatasetName = sanitizeName(datasetName);
@@ -317,6 +341,9 @@ public class DatasetImportDialog {
         }
     }
 
+    /**
+     * 刷新数据集下拉框，并在可能时保持首选项被选中。
+     */
     private void refreshDatasetChoices(String preferredDataset) {
         try {
             List<String> datasetNames = listDatasetNames();
@@ -351,6 +378,9 @@ public class DatasetImportDialog {
         return names;
     }
 
+    /**
+     * 当内存中的数据集变化后，重建作品列表标签。
+     */
     private void refreshWorksList() {
         List<String> labels = new ArrayList<>();
         for (int i = 0; i < currentWorks.size(); i++) {
@@ -360,6 +390,9 @@ public class DatasetImportDialog {
         worksListView.setItems(FXCollections.observableArrayList(labels));
     }
 
+    /**
+     * 将一个作品条目载入编辑控件以便修改。
+     */
     private void loadWorkIntoEditor(int index) {
         WorkEntry entry = currentWorks.get(index);
         editingIndex = index;
@@ -378,6 +411,9 @@ public class DatasetImportDialog {
         statusLabel.setText("正在编辑作品: " + entry.workName);
     }
 
+    /**
+     * 清空编辑器，使下一次保存生成全新的作品条目。
+     */
     private void resetEditorForNewWork() {
         editingIndex = -1;
         workTitleField.clear();
@@ -394,6 +430,9 @@ public class DatasetImportDialog {
             : "当前是新作品模式，保存后会继续让你录入下一部作品。");
     }
 
+    /**
+     * 让用户选择并预览一张作品图片。
+     */
     private void chooseImage() {
         FileChooser fileChooser = new FileChooser();
         fileChooser.setTitle("选择图片");
@@ -416,6 +455,9 @@ public class DatasetImportDialog {
         loadPreviewImage(file);
     }
 
+    /**
+     * 为当前作品添加一首或多首歌曲，并避免重复。
+     */
     private void chooseSongs() {
         FileChooser fileChooser = new FileChooser();
         fileChooser.setTitle("选择曲子");
@@ -443,6 +485,9 @@ public class DatasetImportDialog {
         refreshSongsBox();
     }
 
+    /**
+     * 根据当前内存中的歌曲列表重建可见的歌曲编辑卡片。
+     */
     private void refreshSongsBox() {
         songsBox.getChildren().clear();
 
@@ -481,6 +526,9 @@ public class DatasetImportDialog {
         }
     }
 
+    /**
+     * 将当前作品保存回活动数据集的 CSV 与资源目录。
+     */
     private void saveWork() {
         try {
             String datasetName = resolveDatasetNameForSave();
@@ -535,6 +583,9 @@ public class DatasetImportDialog {
         }
     }
 
+    /**
+     * 导入打包好的数据集 ZIP，并重写资源名称以避免冲突。
+     */
     private void importDatasetPackage() {
         FileChooser fileChooser = new FileChooser();
         fileChooser.setTitle("导入数据包");
@@ -561,6 +612,9 @@ public class DatasetImportDialog {
         }
     }
 
+    /**
+     * 将当前数据集及其引用的全部资源导出为 ZIP 包。
+     */
     private void exportDatasetPackage() {
         try {
             String datasetName = resolveDatasetNameForExport();
@@ -591,6 +645,9 @@ public class DatasetImportDialog {
         }
     }
 
+    /**
+     * 删除当前数据集，并可选删除不再被其他数据集引用的资源。
+     */
     private void deleteDataset() {
         try {
             String datasetName = resolveDatasetNameForExport();
@@ -664,6 +721,9 @@ public class DatasetImportDialog {
         }
     }
 
+    /**
+     * 收集单个 CSV 牌组文件引用的图片和音频名称。
+     */
     private void collectReferencedAssets(Path deckFile, Set<String> imageNames, Set<String> songNames) throws IOException {
         List<WorkEntry> works = readWorks(deckFile);
         for (WorkEntry work : works) {
@@ -678,6 +738,9 @@ public class DatasetImportDialog {
         }
     }
 
+    /**
+     * 收集除当前待删除数据集外的所有数据集资源引用。
+     */
     private void collectReferencedAssetsFromOtherDecks(
         Path deletedDeckFile,
         Set<String> imageNames,
@@ -737,6 +800,9 @@ public class DatasetImportDialog {
         return parent == null ? Path.of(zippedName) : parent.resolve(zippedName);
     }
 
+    /**
+     * 将数据集 CSV 与引用的图片、音频文件写入目标 ZIP。
+     */
     private void exportDatasetToZip(String datasetName, List<WorkEntry> works, Path targetZip) throws IOException {
         Path deckFile = getDeckFile(datasetName);
         if (!Files.exists(deckFile)) {
@@ -786,6 +852,9 @@ public class DatasetImportDialog {
         zipOutputStream.closeEntry();
     }
 
+    /**
+     * 导入一个 ZIP 包，将资源复制到项目目录，并重写 CSV 引用。
+     */
     private String importDatasetFromZip(Path zipPath) throws IOException {
         try (ZipFile zipFile = new ZipFile(zipPath.toFile())) {
             ZipEntry csvEntry = findCsvEntry(zipFile);
@@ -850,6 +919,9 @@ public class DatasetImportDialog {
         }
     }
 
+    /**
+     * 选择 ZIP 中第一个 CSV 条目作为数据集定义。
+     */
     private ZipEntry findCsvEntry(ZipFile zipFile) {
         List<ZipEntry> csvEntries = zipFile.stream()
             .filter(entry -> !entry.isDirectory())
@@ -862,6 +934,9 @@ public class DatasetImportDialog {
         return csvEntries.get(0);
     }
 
+    /**
+     * 在导入名称已存在时生成不冲突的数据集名称。
+     */
     private String resolveUniqueDatasetName(String baseName) throws IOException {
         String candidate = sanitizeName(baseName);
         int counter = 2;
@@ -872,6 +947,9 @@ public class DatasetImportDialog {
         return candidate;
     }
 
+    /**
+     * 从 CSV 流中读取作品条目，并处理 BOM 与可选的显示名列。
+     */
     private List<WorkEntry> readWorks(InputStream inputStream) throws IOException {
         List<WorkEntry> works = new ArrayList<>();
         List<String> lines = new ArrayList<>();
@@ -903,6 +981,9 @@ public class DatasetImportDialog {
         return works;
     }
 
+    /**
+     * 在 ZIP 中定位一个被引用的资源，并将其复制到目标目录。
+     */
     private String copyAssetFromZip(
         ZipFile zipFile,
         Map<String, ZipEntry> entriesByFullName,
@@ -975,6 +1056,9 @@ public class DatasetImportDialog {
         throw new IllegalArgumentException("请先选择或创建一个数据集。");
     }
 
+    /**
+     * 解析图片文件名，并在需要时复制新选择的源图片。
+     */
     private String resolveImageFileName(String datasetName) throws IOException {
         if (selectedImageSource == null) {
             return currentImageFileName;
@@ -987,6 +1071,9 @@ public class DatasetImportDialog {
         return copiedName;
     }
 
+    /**
+     * 解析存储后的音频名称，并在需要时转码 FLAC 文件。
+     */
     private String resolveSongFileName(String datasetName, SongItem songItem) throws IOException {
         if (songItem.sourceFile == null) {
             return songItem.storedFileName;
@@ -1024,6 +1111,9 @@ public class DatasetImportDialog {
         }
     }
 
+    /**
+     * 从磁盘读取牌组 CSV 文件并转换为作品条目。
+     */
     private List<WorkEntry> readWorks(Path deckFile) throws IOException {
         List<WorkEntry> works = new ArrayList<>();
         if (!Files.exists(deckFile)) {
@@ -1054,6 +1144,9 @@ public class DatasetImportDialog {
         return works;
     }
 
+    /**
+     * 使用带 BOM 的 UTF-8 重写数据集 CSV，以保持表格软件兼容性。
+     */
     private void writeWorks(Path deckFile, List<WorkEntry> works) throws IOException {
         List<String> lines = new ArrayList<>();
         lines.add(UTF8_BOM + CSV_HEADER);
@@ -1068,6 +1161,9 @@ public class DatasetImportDialog {
         Files.write(deckFile, lines, StandardCharsets.UTF_8);
     }
 
+    /**
+     * 在尊重引号字段的前提下拆分一行 CSV。
+     */
     private List<String> parseCsvLine(String line) {
         List<String> parts = new ArrayList<>();
         StringBuilder current = new StringBuilder();
@@ -1125,6 +1221,9 @@ public class DatasetImportDialog {
         return getDeckDirectory().resolve(sanitizeName(datasetName) + ".csv");
     }
 
+    /**
+     * 使用不冲突的生成文件名，将资源复制到目标目录。
+     */
     private String copyAsset(Path source, Path targetDirectory, String prefix) throws IOException {
         String originalFileName = source.getFileName().toString();
         String extension = "";
@@ -1139,6 +1238,9 @@ public class DatasetImportDialog {
         return candidate.getFileName().toString();
     }
 
+    /**
+     * 在保存前通过 ffmpeg 将导入的 FLAC 音轨转换为 MP3。
+     */
     private String transcodeFlacToMp3(Path source, Path targetDirectory, String prefix) throws IOException {
         String originalFileName = source.getFileName().toString();
         int dotIndex = originalFileName.lastIndexOf('.');
@@ -1217,6 +1319,9 @@ public class DatasetImportDialog {
         return dotIndex > 0 && fileName.substring(dotIndex + 1).equalsIgnoreCase("flac");
     }
 
+    /**
+     * 规范化生成的资源名称，确保导入文件对文件系统安全。
+     */
     private String sanitizeName(String value) {
         String source = value == null ? "" : value;
         String normalized = Normalizer.normalize(source, Normalizer.Form.NFKC)
@@ -1246,6 +1351,9 @@ public class DatasetImportDialog {
         return value;
     }
 
+    /**
+     * 创建对话框中通用的带标题字段块。
+     */
     private VBox createFieldBlock(String title, String hint, javafx.scene.Node input) {
         VBox block = new VBox(6);
         Label label = new Label(title);
@@ -1310,6 +1418,9 @@ public class DatasetImportDialog {
             "-fx-border-color: rgba(36,50,74,0.08);";
     }
 
+    /**
+     * 显示当前数据集编辑器专用的模态错误对话框。
+     */
     private void showError(String title, String message) {
         Alert alert = new Alert(Alert.AlertType.ERROR);
         alert.initOwner(stage);
@@ -1319,6 +1430,9 @@ public class DatasetImportDialog {
         alert.showAndWait();
     }
 
+    /**
+     * 表示数据集 CSV 单行内容的不可变内存对象。
+     */
     private static final class WorkEntry {
         private final String imageName;
         private final String workName;
@@ -1333,6 +1447,9 @@ public class DatasetImportDialog {
         }
     }
 
+    /**
+     * 表示歌曲的可变编辑模型，歌曲既可能来自磁盘，也可能来自用户新选择的文件。
+     */
     private static final class SongItem {
         private File sourceFile;
         private String storedFileName;

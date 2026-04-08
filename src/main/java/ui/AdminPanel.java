@@ -24,6 +24,9 @@ import model.GameState;
 
 import java.util.List;
 
+/**
+ * 辅助监控窗口，允许操作员在游戏过程中查看并调整牌组状态。
+ */
 public class AdminPanel {
     private final GameEngine gameEngine;
 
@@ -34,11 +37,17 @@ public class AdminPanel {
     private Label statusLabel;
     private boolean autoUpdateStarted;
 
+    /**
+     * 创建管理面板，并立即构建其界面树。
+     */
     public AdminPanel(GameEngine gameEngine) {
         this.gameEngine = gameEngine;
         createUI();
     }
 
+    /**
+     * 构建完整布局，包括在场与离场卡牌列表。
+     */
     private void createUI() {
         stage = new Stage();
         stage.setTitle("管理面板");
@@ -90,6 +99,9 @@ public class AdminPanel {
         stage.setScene(new Scene(root));
     }
 
+    /**
+     * 创建一个卡牌列表列，并保持数量标签同步。
+     */
     private VBox createCardsPanel(String title, ListView<Card> listView, boolean isActive) {
         VBox box = new VBox(10);
         box.setPadding(new Insets(10));
@@ -120,6 +132,9 @@ public class AdminPanel {
         return box;
     }
 
+    /**
+     * 构建用于手动管理牌组的操作栏。
+     */
     private HBox createButtonBox() {
         HBox buttonBox = new HBox(10);
         buttonBox.setPadding(new Insets(10, 0, 0, 0));
@@ -156,6 +171,9 @@ public class AdminPanel {
         return buttonBox;
     }
 
+    /**
+     * 在窗口可见期间每秒刷新一次面板。
+     */
     private void startAutoUpdate() {
         Thread updateThread = new Thread(() -> {
             while (stage.isShowing()) {
@@ -172,6 +190,9 @@ public class AdminPanel {
         updateThread.start();
     }
 
+    /**
+     * 从引擎读取最新状态，并更新所有可见组件。
+     */
     private void updateUI() {
         try {
             GameState state = gameEngine.getGameState();
@@ -199,6 +220,9 @@ public class AdminPanel {
         }
     }
 
+    /**
+     * 在列表内容重载后恢复之前的选中项。
+     */
     private void restoreSelection(ListView<Card> listView, List<Card> cards, Card selectedCard) {
         if (selectedCard == null) {
             return;
@@ -209,6 +233,9 @@ public class AdminPanel {
         }
     }
 
+    /**
+     * 将内部回合状态转换为简洁的状态摘要。
+     */
     private void updateStatusLabel(GameState state) {
         String status;
         switch (state.getRoundState()) {
@@ -232,6 +259,9 @@ public class AdminPanel {
         ));
     }
 
+    /**
+     * 输出当前对局的简要文本快照。
+     */
     private void updateInfoArea(GameState state) {
         StringBuilder sb = new StringBuilder();
         sb.append("已进行回合：").append(state.getCurrentRound()).append('\n');
@@ -246,6 +276,9 @@ public class AdminPanel {
         infoArea.setText(sb.toString());
     }
 
+    /**
+     * 将选中的离场卡牌移回在场列表。
+     */
     private void moveSelectedToActive() {
         Card selectedCard = inactiveCardsView.getSelectionModel().getSelectedItem();
         if (selectedCard != null) {
@@ -256,6 +289,9 @@ public class AdminPanel {
         }
     }
 
+    /**
+     * 将选中的在场卡牌移出当前回合可用池。
+     */
     private void moveSelectedToInactive() {
         Card selectedCard = activeCardsView.getSelectionModel().getSelectedItem();
         if (selectedCard != null) {
@@ -266,6 +302,9 @@ public class AdminPanel {
         }
     }
 
+    /**
+     * 在用户确认后恢复全部离场卡牌。
+     */
     private void clearInactiveCards() {
         Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
         alert.setTitle("确认");
@@ -281,6 +320,9 @@ public class AdminPanel {
         }
     }
 
+    /**
+     * 将当前状态摘要渲染到信息区域。
+     */
     private void exportState() {
         GameState state = gameEngine.getGameState();
         StringBuilder sb = new StringBuilder();
@@ -295,6 +337,9 @@ public class AdminPanel {
         showInfo("状态已导出到面板。");
     }
 
+    /**
+     * 为管理操作显示模态提示对话框。
+     */
     private void showInfo(String message) {
         Alert alert = new Alert(Alert.AlertType.INFORMATION);
         alert.setTitle("提示");
@@ -303,6 +348,9 @@ public class AdminPanel {
         alert.showAndWait();
     }
 
+    /**
+     * 自定义列表单元，用于突出显示卡牌是否在场。
+     */
     private static class CardListCell extends ListCell<Card> {
         private final boolean isActive;
 
@@ -324,6 +372,9 @@ public class AdminPanel {
         }
     }
 
+    /**
+     * 显示面板，并启动一次后台自动刷新。
+     */
     public void show() {
         updateUI();
         if (!autoUpdateStarted) {
@@ -333,6 +384,9 @@ public class AdminPanel {
         stage.show();
     }
 
+    /**
+     * 关闭管理窗口。
+     */
     public void close() {
         stage.close();
     }

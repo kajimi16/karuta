@@ -16,6 +16,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * 加载项目配置，并将数据集 CSV 转换为领域对象。
+ */
 public class ConfigManager {
     private static final String CONFIG_FILE = "config.txt";
 
@@ -30,6 +33,9 @@ public class ConfigManager {
     private String defaultDeck;
     private String failureMode;
 
+    /**
+     * 解析配置根目录，然后加载并校验配置文件。
+     */
     public ConfigManager(String baseDir) throws IOException {
         this.baseDir = resolveBaseDir(baseDir);
         this.rawConfig = new HashMap<>();
@@ -37,6 +43,9 @@ public class ConfigManager {
         validateConfig();
     }
 
+    /**
+     * 支持直接路径、资源路径以及打包后的资源目录。
+     */
     private File resolveBaseDir(String requestedBaseDir) throws IOException {
         File directPath = new File(requestedBaseDir);
         if (containsConfigFile(directPath)) {
@@ -68,10 +77,16 @@ public class ConfigManager {
         throw new FileNotFoundException("Config directory not found: " + requestedBaseDir);
     }
 
+    /**
+     * 检查目录中是否存在预期的配置入口文件。
+     */
     private boolean containsConfigFile(File directory) {
         return directory.isDirectory() && new File(directory, CONFIG_FILE).isFile();
     }
 
+    /**
+     * 从 UTF-8 配置文件读取键值对，并跳过空行和注释行。
+     */
     private void loadConfigFile() throws IOException {
         File configFile = new File(baseDir, CONFIG_FILE);
         if (!configFile.exists()) {
@@ -95,6 +110,9 @@ public class ConfigManager {
         }
     }
 
+    /**
+     * 在读取原始配置后解析路径并校验时长参数。
+     */
     private void validateConfig() {
         musicFolder = resolveConfiguredPath(getConfigValue("music_folder", "config/music/")).getPath();
         imagesFolder = resolveConfiguredPath(getConfigValue("images_folder", "config/images/")).getPath();
@@ -115,6 +133,9 @@ public class ConfigManager {
         return rawConfig.getOrDefault(key, defaultValue);
     }
 
+    /**
+     * 在需要时相对于当前配置目录解析配置路径。
+     */
     private File resolveConfiguredPath(String configuredPath) {
         File directPath = new File(configuredPath);
         if (directPath.exists()) {
@@ -129,6 +150,9 @@ public class ConfigManager {
         return new File(baseDir, normalized);
     }
 
+    /**
+     * 将数据集 CSV 解析为完整的牌组对象。
+     */
     public Deck loadDeck(String deckFilePath) throws IOException {
         File deckFile = new File(deckFilePath);
         if (!deckFile.exists()) {
@@ -160,6 +184,9 @@ public class ConfigManager {
         return deck;
     }
 
+    /**
+     * 将一行 CSV 转换为一张卡牌及其关联歌曲，并跳过无效资源。
+     */
     private void parseDeckLine(String line, Deck deck) {
         List<String> parts = parseCsvLine(line);
         if (parts.size() < 3) {
@@ -204,6 +231,9 @@ public class ConfigManager {
         }
     }
 
+    /**
+     * 处理带引号的 CSV 字段和转义双引号。
+     */
     private List<String> parseCsvLine(String line) {
         List<String> parts = new ArrayList<>();
         StringBuilder current = new StringBuilder();
@@ -272,6 +302,9 @@ public class ConfigManager {
         return failureMode;
     }
 
+    /**
+     * 根据配置的音乐目录解析休息音乐文件。
+     */
     public File getRestMusicFile() {
         return new File(musicFolder, restMusic);
     }

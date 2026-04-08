@@ -35,6 +35,9 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+/**
+ * 起始界面，用于预览可用数据集并收集游戏选项。
+ */
 public class DeckSelectionScreen {
     private final MainWindow mainWindow;
     private final ConfigManager configManager;
@@ -53,6 +56,9 @@ public class DeckSelectionScreen {
     private ImageView previewImageView;
     private ListView<String> previewCardListView;
 
+    /**
+     * 创建选择界面，并立即构建其 UI。
+     */
     public DeckSelectionScreen(MainWindow mainWindow) {
         this.mainWindow = mainWindow;
         this.configManager = mainWindow.getConfigManager();
@@ -60,6 +66,9 @@ public class DeckSelectionScreen {
         createUI();
     }
 
+    /**
+     * 构建双栏数据集浏览区和开始按钮区域。
+     */
     private void createUI() {
         BorderPane root = new BorderPane();
         root.setPadding(new Insets(28));
@@ -249,6 +258,9 @@ public class DeckSelectionScreen {
         updateDeckPreview(deckListView.getSelectionModel().getSelectedIndex());
     }
 
+    /**
+     * 扫描配置中的牌组目录，并填充可见的数据集列表。
+     */
     private void loadAvailableDecks() {
         deckFiles.clear();
         deckListView.getItems().clear();
@@ -275,6 +287,9 @@ public class DeckSelectionScreen {
         }
     }
 
+    /**
+     * 重新加载数据集，并尽量保持之前选中的牌组高亮。
+     */
     private void refreshDeckList(String preferredDeckName) {
         loadAvailableDecks();
         if (deckFiles.isEmpty()) {
@@ -297,6 +312,9 @@ public class DeckSelectionScreen {
         updateDeckPreview(indexToSelect);
     }
 
+    /**
+     * 打开数据集导入对话框，并在关闭后刷新列表。
+     */
     private void openImportDialog() {
         String selectedDeckName = getSelectedDeckName();
         DatasetImportDialog dialog = new DatasetImportDialog(
@@ -316,6 +334,9 @@ public class DeckSelectionScreen {
         return deckFiles.get(selectedIndex).getName().replace(".csv", "");
     }
 
+    /**
+     * 加载选中的数据集，并用代表性内容更新预览组件。
+     */
     private void updateDeckPreview(int selectedIndex) {
         if (selectedIndex < 0 || selectedIndex >= deckFiles.size()) {
             deckNameLabel.setText("未选择数据集");
@@ -364,6 +385,9 @@ public class DeckSelectionScreen {
         }
     }
 
+    /**
+     * 当选中的卡牌拥有有效文件时，加载其图片预览。
+     */
     private void updatePreviewImage(Card card) {
         if (card == null || card.getImageFile() == null || !card.getImageFile().exists()) {
             previewImageView.setImage(null);
@@ -380,6 +404,9 @@ public class DeckSelectionScreen {
         }
     }
 
+    /**
+     * 生成前几首歌曲名称的简短可读预览。
+     */
     private String buildSongPreview(Card card) {
         List<Song> songs = card.getSongs();
         if (songs.isEmpty()) {
@@ -399,6 +426,9 @@ public class DeckSelectionScreen {
         return card.getWorkName() + "  |  " + firstSong;
     }
 
+    /**
+     * 构建所选牌组，应用当前选项，并启动游戏。
+     */
     private void startGame() {
         int selectedIndex = deckListView.getSelectionModel().getSelectedIndex();
         if (selectedIndex < 0 || selectedIndex >= deckFiles.size()) {
@@ -480,6 +510,9 @@ public class DeckSelectionScreen {
                 "-fx-cursor: hand;";
     }
 
+    /**
+     * 限制可编辑数字框只能输入整数，并在失焦时提交数值。
+     */
     private void configureCardCountEditor(SpinnerValueFactory.IntegerSpinnerValueFactory valueFactory) {
         TextFormatter<Integer> formatter = new TextFormatter<>(
                 new IntegerStringConverter(),
@@ -494,6 +527,9 @@ public class DeckSelectionScreen {
         });
     }
 
+    /**
+     * 将构建好的场景提供给主窗口使用。
+     */
     public Scene getScene() {
         return scene;
     }

@@ -6,6 +6,9 @@ import model.Deck;
 import model.GameState;
 import model.Song;
 
+/**
+ * 负责协调回合推进、播放控制与界面回调。
+ */
 public class GameEngine {
     private static final double REST_VOLUME_DB = -12.0;
     private static final double REST_VOLUME_FACTOR = Math.pow(10.0, REST_VOLUME_DB / 20.0);
@@ -20,6 +23,9 @@ public class GameEngine {
     private double normalPlaybackVolume;
     private int currentPlaybackDurationSeconds;
 
+    /**
+     * 供 JavaFX 界面响应引擎状态变化的监听器。
+     */
     public interface GameListener {
         void onRoundStart(Card card);
 
@@ -42,6 +48,9 @@ public class GameEngine {
         void onError(String error);
     }
 
+    /**
+     * 使用一个播放器和一套规则创建游戏引擎。
+     */
     public GameEngine(AudioPlayer audioPlayer, GameRules gameRules) {
         this.audioPlayer = audioPlayer;
         this.gameRules = gameRules;
@@ -49,10 +58,16 @@ public class GameEngine {
         this.normalPlaybackVolume = audioPlayer.getVolume();
     }
 
+    /**
+     * 将牌组载入状态对象，但不通知界面。
+     */
     public void initializeGame(Deck deck, int totalRounds) {
         gameState.initializeGame(deck, totalRounds);
     }
 
+    /**
+     * 初始化游戏，并通知界面可以准备第一回合。
+     */
     public void startGame(Deck deck, int totalRounds) {
         try {
             initializeGame(deck, totalRounds);
@@ -66,6 +81,9 @@ public class GameEngine {
         }
     }
 
+    /**
+     * 从开始、回合结束或休息状态推进状态机。
+     */
     public void prepareNextRound() {
         GameState.RoundState state = gameState.getRoundState();
         if (state == GameState.RoundState.GAME_OVER) {
@@ -83,6 +101,9 @@ public class GameEngine {
         }
     }
 
+    /**
+     * 在牌组尚未耗尽时开始新回合。
+     */
     public void startNewRound() {
         if (gameState.isGameOver()) {
             endGame();
@@ -93,6 +114,9 @@ public class GameEngine {
         startInnerRound();
     }
 
+    /**
+     * 选出下一张卡牌，并在播放前通知界面。
+     */
     private void startInnerRound() {
         gameState.selectCard();
         Card currentCard = gameState.getCurrentCard();
@@ -111,6 +135,9 @@ public class GameEngine {
         }
     }
 
+    /**
+     * 启动受保护的播放线程，避免过期回调修改当前回合状态。
+     */
     private void playMusicWithLimit(Song song) {
         try {
             audioPlayer.setVolume(normalPlaybackVolume);
@@ -152,6 +179,9 @@ public class GameEngine {
         }
     }
 
+    /**
+     * 停止当前播放，并通知界面播放已被中断。
+     */
     public void stopCurrentMusic() {
         cancelPlaybackThread();
         audioPlayer.stop();
@@ -160,6 +190,9 @@ public class GameEngine {
         }
     }
 
+    /**
+     * 记录判定结果，并切换到休息或游戏结束状态。
+     */
     public void submitRoundResult(GameState.Result result) {
         cancelPlaybackThread();
         audioPlayer.stop();
@@ -180,6 +213,9 @@ public class GameEngine {
         }
     }
 
+    /**
+     * 进入休息状态，并在需要时播放较低音量的休息音乐。
+     */
     private void enterRestState() {
         try {
             gameState.enterRestMusic();
@@ -199,12 +235,18 @@ public class GameEngine {
         }
     }
 
+    /**
+     * 只有在游戏仍进行且已启用休息音乐时才播放休息音乐。
+     */
     private boolean shouldPlayRestMusic() {
         return gameRules.isRestMusicEnabled()
                 && gameState.getCurrentDeck() != null
                 && gameState.getCurrentDeck().hasActiveCards();
     }
 
+    /**
+     * 离开休息状态并立即开始下一回合。
+     */
     public void resumeFromRest() {
         cancelPlaybackThread();
         audioPlayer.stop();
@@ -217,6 +259,9 @@ public class GameEngine {
         startNewRound();
     }
 
+    /**
+     * 停止播放并将最终状态发送给界面。
+     */
     public void endGame() {
         cancelPlaybackThread();
         audioPlayer.stop();
@@ -226,6 +271,9 @@ public class GameEngine {
         }
     }
 
+    /**
+     * 中止当前游戏，但不触发游戏结束回调。
+     */
     public void abortGame() {
         cancelPlaybackThread();
         audioPlayer.stop();
@@ -260,6 +308,9 @@ public class GameEngine {
         return audioPlayer.isPaused();
     }
 
+    /**
+     * 释放媒体资源，并中断等待中的播放监控线程。
+     */
     public void dispose() {
         audioPlayer.dispose();
         cancelPlaybackThread();
@@ -269,6 +320,9 @@ public class GameEngine {
         return normalPlaybackVolume;
     }
 
+    /**
+     * 将归一化音量同时应用到正常播放和休息音乐。
+     */
     public void setPlaybackVolume(double volume) {
         if (volume < 0.0 || volume > 1.0) {
             throw new IllegalArgumentException("Volume must be between 0.0 and 1.0.");
@@ -288,6 +342,9 @@ public class GameEngine {
         return currentPlaybackDurationSeconds;
     }
 
+    /**
+     * 使当前播放会话失效，并在需要时中断监控线程。
+     */
     private void cancelPlaybackThread() {
         playbackSessionId++;
         if (playbackThread != null && playbackThread.isAlive()) {

@@ -8,7 +8,14 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
+/**
+ * 保存可配置的游戏规则，例如片段时长和失败处理方式，
+ * 以及可选的休息音乐。
+ */
 public class GameRules {
+    /**
+     * 定义引擎如何处理失败回合。
+     */
     public enum FailureMode {
         PASS,
         SKIP
@@ -26,6 +33,9 @@ public class GameRules {
     private FailureMode failureMode;
     private boolean enableRestMusic;
 
+    /**
+     * 根据项目配置初始化规则集。
+     */
     public GameRules(ConfigManager config) {
         this.minPlaybackDuration = config.getMinDuration();
         this.maxPlaybackDuration = config.getMaxDuration();
@@ -41,6 +51,9 @@ public class GameRules {
         this.failureMode = FailureMode.valueOf(mode.toUpperCase());
     }
 
+    /**
+     * 返回一个落在配置范围内的播放时长。
+     */
     public int getPlaybackDuration() {
         if (minPlaybackDuration >= maxPlaybackDuration) {
             return minPlaybackDuration;
@@ -52,6 +65,9 @@ public class GameRules {
         return restIntervalRounds;
     }
 
+    /**
+     * 允许界面调整休息音乐的插入频率。
+     */
     public void setRestIntervalRounds(int interval) {
         if (interval < 0) {
             throw new IllegalArgumentException("Rest interval cannot be negative.");
@@ -59,6 +75,9 @@ public class GameRules {
         this.restIntervalRounds = interval;
     }
 
+    /**
+     * 优先从候选池中选择休息曲目，否则回退到默认曲目。
+     */
     public Song getRestMusic() {
         if (!restMusicPool.isEmpty()) {
             return restMusicPool.get(RANDOM.nextInt(restMusicPool.size()));
@@ -70,6 +89,9 @@ public class GameRules {
         this.restMusic = music;
     }
 
+    /**
+     * 替换休息时可用的动态歌曲池。
+     */
     public void setRestMusicPool(List<Song> songs) {
         restMusicPool.clear();
         if (songs != null) {
@@ -85,6 +107,9 @@ public class GameRules {
         this.failureMode = mode;
     }
 
+    /**
+     * 判断休息音乐是否已启用且资源可用。
+     */
     public boolean isRestMusicEnabled() {
         return enableRestMusic && (restMusic != null || !restMusicPool.isEmpty());
     }
@@ -93,6 +118,9 @@ public class GameRules {
         this.enableRestMusic = enabled;
     }
 
+    /**
+     * 校验用户提供的播放时长是否在配置范围内。
+     */
     public boolean isValidDuration(int seconds) {
         return seconds >= minPlaybackDuration && seconds <= maxPlaybackDuration;
     }

@@ -29,6 +29,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+/**
+ * 模态选择框，让用户选择哪些卡牌参加下一局游戏。
+ */
 public class CardSelectionDialog {
     private final Stage stage;
     private final Deck deck;
@@ -39,6 +42,9 @@ public class CardSelectionDialog {
 
     private boolean confirmed;
 
+    /**
+     * 初始化模态对话框，并按上限预选卡牌。
+     */
     public CardSelectionDialog(Stage owner, Deck deck, int cardLimit) {
         this.deck = deck;
         this.cardLimit = Math.max(1, cardLimit);
@@ -56,6 +62,9 @@ public class CardSelectionDialog {
         refreshSelectionLabel();
     }
 
+    /**
+     * 阻塞等待对话框关闭，并返回已选与未选卡牌。
+     */
     public SelectionResult showAndWait() {
         stage.showAndWait();
         if (!confirmed) {
@@ -72,6 +81,9 @@ public class CardSelectionDialog {
         return new SelectionResult(selected, unselected);
     }
 
+    /**
+     * 构建画廊式的卡牌选择布局。
+     */
     private Scene buildScene() {
         BorderPane root = new BorderPane();
         root.setPadding(new Insets(24));
@@ -144,6 +156,9 @@ public class CardSelectionDialog {
         return new Scene(root);
     }
 
+    /**
+     * 创建一个可点击的卡牌单元，包含图片、标题和选中标记。
+     */
     private CardTile createCardTile(Card card) {
         VBox tile = new VBox(10);
         tile.setPrefWidth(180);
@@ -203,6 +218,9 @@ public class CardSelectionDialog {
         return new CardTile(tile, selectedBadge);
     }
 
+    /**
+     * 切换卡牌选中状态，并强制遵守最大卡牌数量限制。
+     */
     private boolean toggleCardSelection(Card card) {
         if (!selectedCards.contains(card)) {
             if (selectedCards.size() >= cardLimit) {
@@ -217,6 +235,9 @@ public class CardSelectionDialog {
         return true;
     }
 
+    /**
+     * 在批量操作后重新渲染卡牌单元的选中状态。
+     */
     private void refreshSelectionView() {
         refreshSelectionLabel();
         for (Card card : deck.getCards()) {
@@ -236,6 +257,9 @@ public class CardSelectionDialog {
         updateCardTileStyle(tile.root(), selected);
     }
 
+    /**
+     * 为单个卡牌单元应用已选或未选的视觉样式。
+     */
     private void updateCardTileStyle(VBox tile, boolean selected) {
         if (selected) {
             tile.setStyle(
@@ -259,6 +283,9 @@ public class CardSelectionDialog {
         }
     }
 
+    /**
+     * 按牌组顺序自动选中前几张卡牌，直到达到上限。
+     */
     private void preselectCards() {
         for (Card card : deck.getCards()) {
             if (selectedCards.size() >= cardLimit) {
@@ -272,6 +299,9 @@ public class CardSelectionDialog {
         selectionLabel.setText("已选 " + selectedCards.size() + " / " + cardLimit + " 张，本局实际只使用你勾选的卡牌。");
     }
 
+    /**
+     * 关闭前校验至少选中了一张卡牌。
+     */
     private void confirmSelection() {
         if (selectedCards.isEmpty()) {
             showError("未选择卡牌", "请至少选择 1 张卡牌再开始。");
@@ -312,9 +342,15 @@ public class CardSelectionDialog {
         alert.showAndWait();
     }
 
+    /**
+     * 将最终选择结果返回给调用方。
+     */
     public record SelectionResult(List<Card> selectedCards, List<Card> unselectedCards) {
     }
 
+    /**
+     * 保存卡牌单元根节点及其标记的小型视图模型。
+     */
     private record CardTile(VBox root, Label badge) {
     }
 }

@@ -4,38 +4,46 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * 游戏状态类
- * 管理整个游戏的当前状态
+ * 表示一局进行中游戏的核心可变状态。
  */
 public class GameState {
-    
+
+    /**
+     * 引擎与界面共用的高层回合状态。
+     */
     public enum RoundState {
-        IDLE,               // 空闲状态
-        CARD_SELECTED,      // 已选择卡牌
-        MUSIC_PLAYING,      // 音乐播放中
-        WAITING_RESULT,     // 等待结果
-        ROUND_COMPLETE,     // 回合完成
-        REST_MUSIC,         // 中场休息
-        GAME_OVER           // 游戏结束
+        IDLE,
+        CARD_SELECTED,
+        MUSIC_PLAYING,
+        WAITING_RESULT,
+        ROUND_COMPLETE,
+        REST_MUSIC,
+        GAME_OVER
     }
-    
+
+    /**
+     * 操作员在回合结束时提交的判定结果。
+     */
     public enum Result {
-        SUCCESS,            // 对局成功
-        FAILURE,            // 对局失败
-        PASS,               // 轮空
-        SKIP                // 弃牌
+        SUCCESS,
+        FAILURE,
+        PASS,
+        SKIP
     }
-    
-    private Deck currentDeck;           // 当前使用的卡组
-    private Card currentCard;           // 当前演唱的卡牌
-    private Song currentSong;           // 当前播放的歌曲
-    private RoundState roundState;      // 当前回合状态
-    private int currentRound;           // 当前回合数
-    private int totalRounds;            // 总回合数
-    private long roundStartTime;        // 回合开始时间
-    private List<Card> usedCards;       // 已使用过的卡牌
-    private List<Result> roundResults;  // 每个回合的结果记录
-    
+
+    private Deck currentDeck;
+    private Card currentCard;
+    private Song currentSong;
+    private RoundState roundState;
+    private int currentRound;
+    private int totalRounds;
+    private long roundStartTime;
+    private List<Card> usedCards;
+    private List<Result> roundResults;
+
+    /**
+     * 创建一个空的状态对象，等待引擎初始化。
+     */
     public GameState() {
         this.roundState = RoundState.IDLE;
         this.currentRound = 0;
@@ -43,9 +51,9 @@ public class GameState {
         this.usedCards = new ArrayList<>();
         this.roundResults = new ArrayList<>();
     }
-    
+
     /**
-     * 初始化游戏
+     * 重置所有计数器，并让选中的牌组进入可玩状态。
      */
     public void initializeGame(Deck deck, int totalRounds) {
         this.currentDeck = deck;
@@ -54,13 +62,12 @@ public class GameState {
         this.usedCards.clear();
         this.roundResults.clear();
         this.roundState = RoundState.IDLE;
-        
-        // 初始化卡组，将所有卡加入场上
+
         deck.initializeGame();
     }
-    
+
     /**
-     * 开始新的回合
+     * 推进回合计数，并清空上一回合的选择结果。
      */
     public void startNewRound() {
         currentRound++;
@@ -69,84 +76,83 @@ public class GameState {
         roundStartTime = System.currentTimeMillis();
         roundState = RoundState.IDLE;
     }
-    
+
     /**
-     * 选择卡牌并随机抽取歌曲
+     * 从在场卡牌中随机选一张，并从该卡牌中随机选一首歌。
      */
     public void selectCard() {
         if (currentDeck == null || !currentDeck.hasActiveCards()) {
             roundState = RoundState.GAME_OVER;
             return;
         }
-        
+
         currentCard = currentDeck.getRandomActiveCard();
         if (currentCard != null) {
             currentSong = currentCard.getRandomSong();
             roundState = RoundState.CARD_SELECTED;
         }
     }
-    
+
     /**
-     * 开始播放音乐
+     * 将当前回合切换到播放状态。
      */
     public void startMusicPlayback() {
         if (currentSong != null) {
             roundState = RoundState.MUSIC_PLAYING;
         }
     }
-    
+
     /**
-     * 音乐播放完成
+     * 将回合标记为可手动提交成功或失败结果。
      */
     public void musicPlaybackComplete() {
         roundState = RoundState.WAITING_RESULT;
     }
-    
+
     /**
-     * 提交对局结果
+     * 保存回合结果，并在成功时移除对应卡牌。
      */
     public void submitResult(Result result) {
         roundResults.add(result);
-        
+
         if (result == Result.SUCCESS && currentCard != null) {
-            // 对局成功，将卡牌从场上移除
             currentDeck.removeActiveCard(currentCard);
             usedCards.add(currentCard);
         }
-        
+
         roundState = RoundState.ROUND_COMPLETE;
     }
-    
+
     /**
-     * 进入中场休息
+     * 将状态机切换到休息阶段。
      */
     public void enterRestMusic() {
         roundState = RoundState.REST_MUSIC;
     }
-    
+
     /**
-     * 从中场休息返回准备状态
+     * 在下一回合开始前，从休息状态返回空闲状态。
      */
     public void resumeFromRest() {
         roundState = RoundState.IDLE;
     }
-    
+
     /**
-     * 检查游戏是否结束
+     * 判断当前游戏是否已经耗尽所有在场卡牌。
      */
     public boolean isGameOver() {
         return currentDeck == null || !currentDeck.hasActiveCards();
     }
-    
+
     /**
-     * 结束游戏
+     * 强制将游戏置为结束状态。
      */
     public void endGame() {
         roundState = RoundState.GAME_OVER;
     }
-    
+
     /**
-     * 获取游戏进度（百分比）
+     * 将已完成的卡牌数量转换为 0 到 100 的进度值。
      */
     public int getProgress() {
         if (currentDeck == null || totalRounds == 0) {
@@ -159,15 +165,18 @@ public class GameState {
         return Math.min(100, (completedCards * 100) / totalRounds);
     }
 
+    /**
+     * 返回在场列表中剩余的卡牌数量。
+     */
     public int getRemainingRounds() {
         if (currentDeck == null) {
             return 0;
         }
         return currentDeck.getActiveCardCount();
     }
-    
+
     /**
-     * 获取成功率
+     * 根据已提交的回合结果计算成功率。
      */
     public double getSuccessRate() {
         if (roundResults.isEmpty()) return 0;
@@ -176,56 +185,55 @@ public class GameState {
             .count();
         return (double) successCount / roundResults.size() * 100;
     }
-    
-    // Getters
+
     public Deck getCurrentDeck() {
         return currentDeck;
     }
-    
+
     public Card getCurrentCard() {
         return currentCard;
     }
-    
+
     public Song getCurrentSong() {
         return currentSong;
     }
-    
+
     public RoundState getRoundState() {
         return roundState;
     }
-    
+
     public int getCurrentRound() {
         return currentRound;
     }
-    
+
     public int getTotalRounds() {
         return totalRounds;
     }
-    
+
     public long getRoundStartTime() {
         return roundStartTime;
     }
-    
+
     public List<Card> getUsedCards() {
         return new ArrayList<>(usedCards);
     }
-    
+
     public List<Result> getRoundResults() {
         return new ArrayList<>(roundResults);
     }
-    
+
     public int getSuccessCount() {
         return (int) roundResults.stream()
             .filter(r -> r == Result.SUCCESS)
             .count();
     }
-    
+
     public int getFailureCount() {
         return (int) roundResults.stream()
             .filter(r -> r == Result.FAILURE)
             .count();
     }
-    
+
     @Override
     public String toString() {
         return String.format(

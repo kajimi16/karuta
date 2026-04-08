@@ -6,51 +6,52 @@ import java.util.List;
 import java.util.Random;
 
 /**
- * 卡牌类
- * 代表一张卡牌，包含图片和对应的一个或多个歌曲
+ * 表示一张可用于游戏的卡牌，包含卡面和一首或多首关联歌曲。
  */
 public class Card {
-    private String imageName;       // 图片文件名
-    private File imageFile;         // 图片文件对象
-    private String workName;        // 作品名称（显示用）
-    private List<Song> songs;       // 该卡对应的所有歌曲
-    private boolean isActive;       // 卡是否在场上（用于后台管理）
-    
+    private String imageName;
+    private File imageFile;
+    private String workName;
+    private List<Song> songs;
+    private boolean isActive;
+
     private static final Random RANDOM = new Random();
-    
+
+    /**
+     * 创建一张默认处于启用状态的卡牌。
+     */
     public Card(String imageName, String workName) {
         this.imageName = imageName;
         this.workName = workName;
         this.songs = new ArrayList<>();
         this.isActive = true;
     }
-    
+
     /**
-     * 添加歌曲
+     * 只添加一次歌曲，避免卡牌出现重复曲目。
      */
     public void addSong(Song song) {
         if (song != null && !songs.contains(song)) {
             songs.add(song);
         }
     }
-    
+
     /**
-     * 移除歌曲
+     * 从卡牌中移除一首关联歌曲。
      */
     public void removeSong(Song song) {
         songs.remove(song);
     }
-    
+
     /**
-     * 获取所有歌曲
+     * 返回关联歌曲列表的防御性拷贝。
      */
     public List<Song> getSongs() {
         return new ArrayList<>(songs);
     }
-    
+
     /**
-     * 随机获取一首歌曲
-     * 如果该卡没有歌曲，返回null
+     * 为当前回合随机选择一首歌曲。
      */
     public Song getRandomSong() {
         if (songs.isEmpty()) {
@@ -58,9 +59,9 @@ public class Card {
         }
         return songs.get(RANDOM.nextInt(songs.size()));
     }
-    
+
     /**
-     * 获取指定索引的歌曲
+     * 安全地按索引获取歌曲。
      */
     public Song getSong(int index) {
         if (index >= 0 && index < songs.size()) {
@@ -68,51 +69,50 @@ public class Card {
         }
         return null;
     }
-    
+
     /**
-     * 获取歌曲数量
+     * 返回卡牌关联的歌曲数量。
      */
     public int getSongCount() {
         return songs.size();
     }
-    
+
     /**
-     * 检查图片是否存在
+     * 判断卡面图片文件是否存在。
      */
     public boolean imageExists() {
         return imageFile != null && imageFile.exists();
     }
-    
-    // Getters and Setters
+
     public String getImageName() {
         return imageName;
     }
-    
+
     public File getImageFile() {
         return imageFile;
     }
-    
+
     public void setImageFile(File file) {
         this.imageFile = file;
     }
-    
+
     public String getWorkName() {
         return workName;
     }
-    
+
     public boolean isActive() {
         return isActive;
     }
-    
+
     public void setActive(boolean active) {
         isActive = active;
     }
-    
+
     @Override
     public String toString() {
         return workName + " (图片: " + imageName + ", 歌曲数: " + songs.size() + ")";
     }
-    
+
     @Override
     public boolean equals(Object obj) {
         if (!(obj instanceof Card)) {
@@ -121,7 +121,7 @@ public class Card {
         Card other = (Card) obj;
         return this.imageName.equals(other.imageName);
     }
-    
+
     @Override
     public int hashCode() {
         return imageName.hashCode();

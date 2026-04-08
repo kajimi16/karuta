@@ -14,6 +14,9 @@ import model.Song;
 import java.io.IOException;
 import java.util.List;
 
+/**
+ * 应用入口，负责串联配置、游戏服务和 JavaFX 界面。
+ */
 public class MainWindow extends Application {
     private Stage primaryStage;
     private ConfigManager configManager;
@@ -24,6 +27,9 @@ public class MainWindow extends Application {
     private AdminPanel adminPanel;
     private DeckSelectionScreen deckSelectionScreen;
 
+    /**
+     * 启动应用并显示牌组选择界面。
+     */
     @Override
     public void start(Stage stage) {
         primaryStage = stage;
@@ -44,11 +50,17 @@ public class MainWindow extends Application {
         primaryStage.show();
     }
 
+    /**
+     * 将用户带回数据集选择界面。
+     */
     public void showDeckSelectionScreen() {
         Scene scene = deckSelectionScreen.getScene();
         primaryStage.setScene(scene);
     }
 
+    /**
+     * 应用所选游戏选项并打开游戏界面。
+     */
     public void startGame(
         Deck selectedDeck,
         int totalRounds,
@@ -71,11 +83,17 @@ public class MainWindow extends Application {
         }
     }
 
+    /**
+     * 打开用于监控实时牌组状态的辅助管理窗口。
+     */
     private void openAdminPanel() {
         adminPanel = new AdminPanel(gameEngine);
         adminPanel.show();
     }
 
+    /**
+     * 重新创建引擎，确保下一局从干净的播放状态开始。
+     */
     public void returnToDeckSelection() {
         gameEngine.dispose();
         gameEngine = new GameEngine(new AudioPlayer(), gameRules);
@@ -88,6 +106,9 @@ public class MainWindow extends Application {
         showDeckSelectionScreen();
     }
 
+    /**
+     * 显示由主窗口持有的错误对话框。
+     */
     public void showErrorDialog(String title, String message) {
         Alert alert = new Alert(Alert.AlertType.ERROR);
         alert.setTitle(title);
@@ -96,6 +117,9 @@ public class MainWindow extends Application {
         alert.showAndWait();
     }
 
+    /**
+     * 显示简单的信息提示对话框。
+     */
     public void showInfoDialog(String title, String message) {
         Alert alert = new Alert(Alert.AlertType.INFORMATION);
         alert.setTitle(title);
@@ -116,6 +140,9 @@ public class MainWindow extends Application {
         return gameRules;
     }
 
+    /**
+     * 在应用退出时释放音频资源。
+     */
     @Override
     public void stop() {
         if (gameEngine != null) {
@@ -123,6 +150,9 @@ public class MainWindow extends Application {
         }
     }
 
+    /**
+     * 标准的 JavaFX 启动入口。
+     */
     public static void main(String[] args) {
         launch(args);
     }

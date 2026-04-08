@@ -32,6 +32,9 @@ import model.Song;
 import java.io.FileInputStream;
 import java.util.stream.Collectors;
 
+/**
+ * 游戏中的主界面，用于响应引擎事件并提供回合控制。
+ */
 public class GameScreen {
     private final MainWindow mainWindow;
     private final GameEngine gameEngine;
@@ -59,11 +62,17 @@ public class GameScreen {
     private Button restMusicToggleButton;
     private FlowPane centerPane;
 
+    /**
+     * 保存渲染游戏界面所需的协作对象。
+     */
     public GameScreen(MainWindow mainWindow, GameEngine gameEngine) {
         this.mainWindow = mainWindow;
         this.gameEngine = gameEngine;
     }
 
+    /**
+     * 构建场景，绑定引擎回调，并启动所选游戏。
+     */
     public void initialize(Deck deck, int totalRounds) {
         currentDeck = deck;
         createUI();
@@ -72,6 +81,9 @@ public class GameScreen {
         refreshDeckSummary();
     }
 
+    /**
+     * 创建整体的顶部、中部和底部布局区域。
+     */
     private void createUI() {
         BorderPane root = new BorderPane();
         root.setStyle(
@@ -87,6 +99,9 @@ public class GameScreen {
         updateCenterLayout(1280);
     }
 
+    /**
+     * 构建包含回合计数、统计信息和音量控制的状态头部。
+     */
     private HBox createTopBar() {
         HBox topBar = new HBox(18);
         topBar.setPadding(new Insets(24, 28, 20, 28));
@@ -141,6 +156,9 @@ public class GameScreen {
         return topBar;
     }
 
+    /**
+     * 包裹中部内容，使三个面板在较窄宽度下可以重新换行。
+     */
     private ScrollPane createResponsiveCenter() {
         centerPane = new FlowPane(Orientation.HORIZONTAL, 24, 24);
         centerPane.setPadding(new Insets(0, 28, 24, 28));
@@ -155,6 +173,9 @@ public class GameScreen {
         return scrollPane;
     }
 
+    /**
+     * 为当前选中的卡牌创建大图展示面板。
+     */
     private VBox createArtworkPanel() {
         VBox artworkPanel = new VBox(16);
         artworkPanel.setAlignment(Pos.TOP_CENTER);
@@ -199,6 +220,9 @@ public class GameScreen {
         return artworkPanel;
     }
 
+    /**
+     * 创建回合状态面板和简短的玩法说明。
+     */
     private VBox createRoundInfoPanel() {
         VBox infoPanel = new VBox(18);
         infoPanel.setPadding(new Insets(24));
@@ -250,6 +274,9 @@ public class GameScreen {
         return infoPanel;
     }
 
+    /**
+     * 创建用于概览在场卡池的侧边面板。
+     */
     private VBox createQueuePanel() {
         VBox queuePanel = new VBox(18);
         queuePanel.setPadding(new Insets(24));
@@ -276,6 +303,9 @@ public class GameScreen {
         return queuePanel;
     }
 
+    /**
+     * 调整换行长度，使中部面板在不同窗口宽度下保持可读。
+     */
     private void updateCenterLayout(double width) {
         if (centerPane == null) {
             return;
@@ -283,6 +313,9 @@ public class GameScreen {
         centerPane.setPrefWrapLength(Math.max(680, width - 120));
     }
 
+    /**
+     * 构建用于提交回合结果、控制休息音乐和导航的按钮。
+     */
     private VBox createButtonBar() {
         VBox buttonBar = new VBox(15);
         buttonBar.setPadding(new Insets(0, 28, 28, 28));
@@ -324,6 +357,9 @@ public class GameScreen {
         return button;
     }
 
+    /**
+     * 为所有引擎回调注册界面响应逻辑。
+     */
     private void setupGameEngine() {
         gameEngine.setGameListener(new GameEngine.GameListener() {
             @Override
@@ -443,18 +479,30 @@ public class GameScreen {
         });
     }
 
+    /**
+     * 提交成功结果。
+     */
     private void submitSuccess() {
         gameEngine.submitRoundResult(GameState.Result.SUCCESS);
     }
 
+    /**
+     * 提交失败结果。
+     */
     private void submitFailure() {
         gameEngine.submitRoundResult(GameState.Result.FAILURE);
     }
 
+    /**
+     * 将引擎从空闲或休息状态推进到下一可玩回合。
+     */
     private void resumeFromRest() {
         gameEngine.prepareNextRound();
     }
 
+    /**
+     * 当引擎处于休息状态时暂停或继续休息音乐。
+     */
     private void toggleRestMusicPlayback() {
         GameState state = gameEngine.getGameState();
         boolean inRestState = state != null && state.getRoundState() == GameState.RoundState.REST_MUSIC;
@@ -476,6 +524,9 @@ public class GameScreen {
         updateRestMusicToggleButton();
     }
 
+    /**
+     * 保持休息音乐开关按钮的文本和禁用状态与播放状态一致。
+     */
     private void updateRestMusicToggleButton() {
         if (restMusicToggleButton == null) {
             return;
@@ -505,6 +556,9 @@ public class GameScreen {
         restMusicToggleButton.setText("暂停休息音乐");
     }
 
+    /**
+     * 刷新当前卡牌的大图预览。
+     */
     private void updateCardImage(Card card) {
         if (card == null || card.getImageFile() == null || !card.getImageFile().exists()) {
             cardImageView.setImage(null);
@@ -521,6 +575,9 @@ public class GameScreen {
         }
     }
 
+    /**
+     * 在每个回合结果提交后更新头部统计信息。
+     */
     private void updateStats(GameState state) {
         statsLabel.setText(String.format(
                 "成功 %d | 失败 %d | 成功率 %.1f%%",
@@ -529,6 +586,9 @@ public class GameScreen {
                 state.getSuccessRate()));
     }
 
+    /**
+     * 重新计算头部和队列摘要中的牌组计数。
+     */
     private void refreshDeckSummary() {
         GameState state = gameEngine.getGameState();
         Deck deck = state != null ? state.getCurrentDeck() : currentDeck;
@@ -547,6 +607,9 @@ public class GameScreen {
                 deck.getActiveCardCount(), deck.getInactiveCards().size()));
     }
 
+    /**
+     * 构建当前卡牌前几首歌曲标题的简短列表。
+     */
     private String buildSongList(Card card) {
         if (card == null || card.getSongs().isEmpty()) {
             return "该卡牌没有可播放歌曲。";
@@ -557,6 +620,9 @@ public class GameScreen {
                 .collect(Collectors.joining(" / "));
     }
 
+    /**
+     * 显示游戏结束摘要，并在之后返回主菜单。
+     */
     private void showGameOverDialog(GameState state) {
         Alert alert = new Alert(Alert.AlertType.INFORMATION);
         alert.setTitle("游戏结束");
@@ -570,12 +636,18 @@ public class GameScreen {
         returnToMenu();
     }
 
+    /**
+     * 停止当前游戏并返回牌组选择界面。
+     */
     private void returnToMenu() {
         gameEngine.abortGame();
         stopPlaybackTimeline();
         mainWindow.returnToDeckSelection();
     }
 
+    /**
+     * 在限定时长播放期间驱动进度条动画。
+     */
     private void startPlaybackTimeline() {
         stopPlaybackTimeline();
 
@@ -597,6 +669,9 @@ public class GameScreen {
         playbackTimeline.playFromStart();
     }
 
+    /**
+     * 停止并丢弃播放进度时间线。
+     */
     private void stopPlaybackTimeline() {
         if (playbackTimeline != null) {
             playbackTimeline.stop();
@@ -619,6 +694,9 @@ public class GameScreen {
                 "-fx-border-color: rgba(36,50,74,0.08);";
     }
 
+    /**
+     * 将构建好的场景提供给主窗口使用。
+     */
     public Scene getScene() {
         return scene;
     }
