@@ -2,6 +2,7 @@ package ui;
 
 import config.ConfigManager;
 import javafx.collections.FXCollections;
+import javafx.concurrent.Task;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
@@ -108,6 +109,59 @@ public class DatasetImportDialog {
     }
 
     /**
+     * Exports the current dataset into an A4-ready PDF with four cards per page.
+     */
+    private void exportPrintablePdf() {
+        try {
+            String datasetName = resolveDatasetNameForExport();
+            Path deckFile = getDeckFile(datasetName);
+            if (!Files.exists(deckFile)) {
+                throw new IllegalArgumentException("未找到数据集 CSV：" + deckFile.getFileName());
+            }
+
+            List<WorkEntry> works = readWorks(deckFile);
+            if (works.isEmpty()) {
+                throw new IllegalArgumentException("数据集为空，无法导出打印 PDF。");
+            }
+
+            FileChooser fileChooser = new FileChooser();
+            fileChooser.setTitle("导出打印 PDF");
+            fileChooser.setInitialFileName(datasetName + "-print-a4.pdf");
+            fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("PDF 文件", "*.pdf"));
+            File targetFile = fileChooser.showSaveDialog(stage);
+            if (targetFile == null) {
+                return;
+            }
+
+            Path targetPdf = ensurePdfExtension(targetFile.toPath());
+            statusLabel.setText("正在导出打印 PDF：" + datasetName + "（" + works.size() + " 张卡牌）");
+
+            Task<Void> exportTask = new Task<>() {
+                @Override
+                protected Void call() throws Exception {
+                    DatasetPrintPdfExporter.export(targetPdf, buildPrintableCards(works));
+                    return null;
+                }
+            };
+
+            exportTask.setOnSucceeded(event ->
+                statusLabel.setText("打印 PDF 导出成功：" + targetPdf.getFileName())
+            );
+            exportTask.setOnFailed(event -> {
+                statusLabel.setText("打印 PDF 导出失败。");
+                Throwable exception = exportTask.getException();
+                showError("导出失败", exception == null ? "未知错误" : exception.getMessage());
+            });
+
+            Thread exportThread = new Thread(exportTask, "dataset-print-pdf-export");
+            exportThread.setDaemon(true);
+            exportThread.start();
+        } catch (Exception e) {
+            showError("导出失败", e.getMessage());
+        }
+    }
+
+    /**
      * 显示模态数据集编辑器。
      */
     public void showAndWait() {
@@ -206,8 +260,17 @@ public class DatasetImportDialog {
         deleteDatasetButton.setStyle(createSecondaryButtonStyle());
         deleteDatasetButton.setOnAction(event -> deleteDataset());
 
-        HBox packageActionBar = new HBox(10, importPackageButton, exportPackageButton, deleteDatasetButton);
-        packageActionBar.setAlignment(Pos.CENTER_LEFT);
+        Button exportPrintPdfButton = new Button("导出打印 PDF");
+        exportPrintPdfButton.setStyle(createSecondaryButtonStyle());
+        exportPrintPdfButton.setOnAction(event -> exportPrintablePdf());
+
+        HBox packageTransferBar = new HBox(10, importPackageButton, exportPackageButton);
+        packageTransferBar.setAlignment(Pos.CENTER_LEFT);
+
+        HBox packageUtilityBar = new HBox(10, exportPrintPdfButton, deleteDatasetButton);
+        packageUtilityBar.setAlignment(Pos.CENTER_LEFT);
+
+        VBox packageActionBox = new VBox(10, packageTransferBar, packageUtilityBar);
 
         worksListView.setPrefHeight(520);
         worksListView.getSelectionModel().selectedIndexProperty().addListener((obs, oldValue, newValue) -> {
@@ -222,7 +285,7 @@ public class DatasetImportDialog {
             createFieldBlock("已有数据集", "下拉选择后可直接编辑里面的作品。", datasetComboBox),
             createFieldBlock("新数据集名称", "没有的话就在这里新建。", newDatasetField),
             useDatasetButton,
-            packageActionBar,
+            packageActionBox,
             createFieldBlock("作品列表", "左侧选中某个作品即可进入编辑状态。", worksListView)
         );
         VBox.setVgrow(worksListView, Priority.ALWAYS);
@@ -798,6 +861,28 @@ public class DatasetImportDialog {
         Path parent = targetPath.getParent();
         String zippedName = fileName + ".zip";
         return parent == null ? Path.of(zippedName) : parent.resolve(zippedName);
+    }
+
+    private Path ensurePdfExtension(Path targetPath) {
+        String fileName = targetPath.getFileName().toString();
+        if (fileName.toLowerCase(Locale.ROOT).endsWith(".pdf")) {
+            return targetPath;
+        }
+        Path parent = targetPath.getParent();
+        String pdfName = fileName + ".pdf";
+        return parent == null ? Path.of(pdfName) : parent.resolve(pdfName);
+    }
+
+    private List<DatasetPrintPdfExporter.PrintableCard> buildPrintableCards(List<WorkEntry> works) {
+        Path imagesDirectory = Path.of(configManager.getImagesFolder());
+        List<DatasetPrintPdfExporter.PrintableCard> printableCards = new ArrayList<>(works.size());
+        for (WorkEntry work : works) {
+            Path imagePath = work.imageName == null || work.imageName.isBlank()
+                ? null
+                : imagesDirectory.resolve(work.imageName);
+            printableCards.add(new DatasetPrintPdfExporter.PrintableCard(imagePath));
+        }
+        return printableCards;
     }
 
     /**
