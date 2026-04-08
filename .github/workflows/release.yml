@@ -12,7 +12,7 @@ permissions:
 jobs:
   build-macos:
     name: Build macOS dmg
-    runs-on: macos-13
+    runs-on: macos-14
 
     steps:
       - name: Check out repository
@@ -71,8 +71,11 @@ jobs:
         id: version
         shell: powershell
         run: |
-          $version = mvn -q -DforceStdout help:evaluate -Dexpression=project.version
-          $version = $version.Trim()
+          $version = (mvn -q -DforceStdout help:evaluate -Dexpression=project.version | Select-Object -Last 1).Trim()
+          if ([string]::IsNullOrWhiteSpace($version)) {
+            throw "Failed to resolve project version."
+          }
+
           "version=$version" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
 
       - name: Install WiX Toolset
