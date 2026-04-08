@@ -43,7 +43,8 @@ public class MainWindow extends Application {
             gameEngine = new GameEngine(new AudioPlayer(), gameRules);
             deckSelectionScreen = new DeckSelectionScreen(this);
             showDeckSelectionScreen();
-        } catch (IOException e) {
+        } catch (Exception e) {
+            e.printStackTrace();
             showErrorDialog("配置加载失败", e.getMessage());
         }
 
@@ -62,12 +63,11 @@ public class MainWindow extends Application {
      * 应用所选游戏选项并打开游戏界面。
      */
     public void startGame(
-        Deck selectedDeck,
-        int totalRounds,
-        boolean enableRestMusic,
-        GameRules.FailureMode failureMode,
-        List<Song> restMusicPool
-    ) {
+            Deck selectedDeck,
+            int totalRounds,
+            boolean enableRestMusic,
+            GameRules.FailureMode failureMode,
+            List<Song> restMusicPool) {
         try {
             gameRules.setRestMusicEnabled(enableRestMusic);
             gameRules.setFailureMode(failureMode);
