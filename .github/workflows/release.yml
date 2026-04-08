@@ -71,7 +71,9 @@ jobs:
         id: version
         shell: powershell
         run: |
-          $version = (mvn -q -DforceStdout help:evaluate -Dexpression=project.version | Select-Object -Last 1).Trim()
+          $pomContent = Get-Content pom.xml -Raw
+          $versionMatch = [regex]::Match($pomContent, '<artifactId>karuta-jukebox</artifactId>\s*<version>([^<]+)</version>')
+          $version = $versionMatch.Groups[1].Value.Trim()
           if ([string]::IsNullOrWhiteSpace($version)) {
             throw "Failed to resolve project version."
           }
